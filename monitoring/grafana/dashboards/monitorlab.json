@@ -1,0 +1,180 @@
+{
+  "id": null,
+  "uid": "monitorlab-demo",
+  "title": "MonitorLab · Monitoreo de Aplicaciones",
+  "schemaVersion": 40,
+  "version": 1,
+  "refresh": "5s",
+  "tags": [
+    "monitorlab",
+    "demo",
+    "observabilidad"
+  ],
+  "timezone": "browser",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "editable": false,
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Solicitudes por minuto",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-monitorlab"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(monitorlab_http_requests_total[1m])) * 60",
+          "legendFormat": "Solicitudes por minuto"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Errores HTTP 500 (%)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-monitorlab"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * (sum(rate(monitorlab_http_requests_total{status=\"500\"}[1m])) or vector(0)) / clamp_min((sum(rate(monitorlab_http_requests_total[1m])) or vector(0)), 0.000001)",
+          "legendFormat": "Errores HTTP 500 (%)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Latencia p95 (segundos)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-monitorlab"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(monitorlab_http_request_duration_seconds_bucket[1m])))",
+          "legendFormat": "Latencia p95 (segundos)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Errores HTTP 500, últimos 5 min",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus-monitorlab"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 9,
+        "w": 12,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sum(increase(monitorlab_http_requests_total{status=\"500\"}[5m])) or vector(0))",
+          "legendFormat": "Errores HTTP 500, últimos 5 min"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      }
+    }
+  ]
+}

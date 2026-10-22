@@ -1,0 +1,11 @@
+groups:
+  - name: monitorlab-demo
+    rules:
+      - alert: MonitorLabErroresAltos
+        expr: (sum(increase(monitorlab_http_requests_total{status="500"}[1m])) or vector(0)) > 3
+        for: 0s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Se detectaron más de 3 errores HTTP 500 en el último minuto"
+          description: "Alerta didáctica: revisar logs de la API MonitorLab"

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Observabilidad y Monitoreo de Aplicaciones · MonitorLab</title>
+<style>
+:root {font-family:Inter,Segoe UI,Arial,sans-serif;color:#e9effb;background:#101827}
+*{box-sizing:border-box}body{max-width:1050px;margin:0 auto;padding:36px 24px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+small,.muted{color:#b3bfd3}.tag{border:1px solid #4164a4;color:#bad0ff;padding:8px 12px;border-radius:12px}
+h1{font-size:2.3rem;margin:14px 0 4px}p{line-height:1.6}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:28px 0}
+.card{padding:23px;border-radius:15px;border:1px solid #35425b;background:#1c2a40}
+.card h3{margin:0 0 12px}.card p{font-size:.91rem;color:#c4cede;min-height:78px}
+button{border:0;padding:11px 14px;border-radius:9px;font-weight:700;cursor:pointer;color:white;background:#356ae6}
+button:hover{filter:brightness(1.15)}button:disabled{opacity:.5;cursor:wait}
+.slow{background:#a56b15}.error{background:#bb3549}
+.panel{background:#19253a;border:1px solid #35425b;border-radius:15px;padding:20px;margin:15px 0}
+pre{overflow-wrap:anywhere;white-space:pre-wrap;line-height:1.7;margin:8px 0;color:#d5e3ff}
+a{color:#8fb9ff}.links{display:flex;flex-wrap:wrap;gap:20px}
+@media(max-width:760px){.cards{grid-template-columns:1fr}header{align-items:start}h1{font-size:1.8rem}}
+</style></head>
+<body>
+<header><div><small>ARQUITECTURA DE SOFTWARE · DEMO REAL</small><h1>Observabilidad y Monitoreo de Aplicaciones</h1><p class="muted">Monitoreo de aplicaciones · Métricas, latencia, errores y logs</p></div><span class="tag">API activa</span></header>
+<div class="cards">
+<div class="card"><h3>1 · Tráfico normal</h3><p>Consultas HTTP 200. Aumenta el número de solicitudes sin generar fallas.</p><button id="normal" onclick="simulate('normal',24)">Generar 24 consultas</button></div>
+<div class="card"><h3>2 · Aplicación lenta</h3><p>Respuestas HTTP 200 con demora artificial de 3 segundos. Sube la latencia p95.</p><button id="lento" class="slow" onclick="simulate('lento',10)">Generar 10 consultas lentas</button></div>
+<div class="card"><h3>3 · Error del servidor</h3><p>Compara un error aislado con una ráfaga de errores HTTP 500. La alerta se activa cuando hay más de 3 errores en un minuto.</p><button id="error-uno" class="error" onclick="simulate('error',1)">Generar 1 error</button> <button id="error" class="error" onclick="simulate('error',16)">Generar 16 errores</button></div>
+</div>
+<div class="panel"><strong>Resultados de la última prueba</strong><pre id="out" aria-live="polite">Selecciona un escenario para enviar solicitudes reales a la API.</pre></div>
+<div class="panel"><strong>Observa las consecuencias</strong><p class="links"><a href="http://localhost:3000" target="_blank" rel="noopener">Grafana · Dashboard</a><a href="http://localhost:9090/alerts" target="_blank" rel="noopener">Prometheus · Alertas</a><a href="/docs" target="_blank">Documentación de API</a><a href="/metrics" target="_blank">Métricas en bruto</a></p><p class="muted">Grafana suele reflejar nuevos datos después del siguiente scraping (configurado cada 5 s). Usa un rango de tiempo de últimos 5 o 15 minutos. Para demostrar que 1 error NO activa la alerta, espera primero al menos 1 minuto sin errores y comprueba que en Prometheus esté Inactive; la alerta evalúa una ventana móvil de 1 minuto.</p></div>
+<script>
+const out=document.getElementById('out');
+async function simulate(mode,count){
+ document.querySelectorAll('button').forEach(b=>b.disabled=true);
+ out.textContent='Enviando '+count+' solicitudes con modo='+mode+' ...';
+ const started=performance.now();let ok=0,err=0,failed=0;
+ async function one(i){
+  try {const r=await fetch('/api/operaciones/'+(100+i)+'?modo='+mode); if(r.ok)ok++; else if(r.status===500)err++; else failed++;}
+  catch(e){failed++;}
+ }
+ // Lotes de cinco para no sobrecargar el equipo local.
+ for(let i=0;i<count;i+=5)await Promise.all(Array.from({length:Math.min(5,count-i)},(_,j)=>one(i+j)));
+ let seconds=((performance.now()-started)/1000).toFixed(1);
+ out.textContent='Escenario: '+mode+'\nSolicitudes: '+count+'\nHTTP 200: '+ok+'\nHTTP 500: '+err+'\nErrores de red/otros: '+failed+'\nDuración total: '+seconds+' s\n\nAhora abre Grafana y revisa la gráfica de tráfico, tasa de error y latencia p95.';
+ document.querySelectorAll('button').forEach(b=>b.disabled=false);
+}
+</script></body></html>
